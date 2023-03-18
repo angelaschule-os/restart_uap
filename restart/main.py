@@ -6,6 +6,12 @@ import logging
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Disable SSL certificate warnings
+from urllib3.exceptions import InsecureRequestWarning
+from urllib3 import disable_warnings
+
+disable_warnings(InsecureRequestWarning)
+
 
 def setup_logging():
     logger = logging.getLogger("requests")
@@ -42,28 +48,24 @@ def load_credentials():
     return username, password, base_url
 
 
-def login(base_url, username, password):
+def login(base_url, username, password, session, logger):
     login_url = f"{base_url}/api/login"
     login_data = {"username": username, "password": password, "remember": True}
 
     try:
-        login_response = requests.post(login_url, json=login_data, verify=False)
+        login_response = session.post(login_url, json=login_data, verify=False)
     except requests.exceptions.RequestException as e:
         logger.error("Login request failed: %s", e)
-        return None
+        return False
 
-    if login_response.status_code == 200:
-        return login_response.cookies
-    else:
-        logger.error("Login failed. Status code: %d", login_response.status_code)
-        return None
+    return login_response.status_code == 200
 
 
-def fetch_data(base_url, session_cookie):
+def fetch_data(base_url, session, logger):
     data_url = f"{base_url}/api/s/default/stat/device-basic"
 
     try:
-        response = requests.get(data_url, cookies=session_cookie, verify=False)
+        response = session.get(data_url, verify=False)
     except requests.exceptions.RequestException as e:
         logger.error("Request failed: %s", e)
         return None
@@ -77,14 +79,12 @@ def fetch_data(base_url, session_cookie):
         return None
 
 
-def restart_device(base_url, mac_address, session_cookie):
+def restart_device(base_url, mac_address, session, logger):
     cmd_url = f"{base_url}/api/s/default/cmd/devmgr"
     post_data = {"cmd": "restart", "mac": mac_address}
 
     try:
-        cmd_response = requests.post(
-            cmd_url, json=post_data, cookies=session_cookie, verify=False
-        )
+        cmd_response = session.post(cmd_url, json=post_data, verify=False)
     except requests.exceptions.RequestException as e:
         logger.error("Request failed for MAC address %s: %s", mac_address, e)
         return False
@@ -101,31 +101,30 @@ def restart_device(base_url, mac_address, session_cookie):
 
 
 def restart_device_wrapper(args):
-    base_url, mac_address, session_cookie = args
-    return mac_address, restart_device(base_url, mac_address, session_cookie)
+    base_url, mac_address, session, logger = args
+    return mac_address, restart_device(base_url, mac_address, session, logger)
 
 
 def main():
-    global logger
     logger = setup_logging()
-
     username, password, base_url = load_credentials()
-    session_cookie = login(base_url, username, password)
 
-    if session_cookie:
-        json_data = fetch_data(base_url, session_cookie)
+    with requests.Session() as session:
+        if login(base_url, username, password, session, logger):
+            json_data = fetch_data(base_url, session, logger)
 
-        if json_data:
-            mac_addresses = filter_mac_addresses(json_data)
-            print("Filtered MAC addresses:", mac_addresses)
+            if json_data:
+                mac_addresses = filter_mac_addresses(json_data)
+                print("Filtered MAC addresses:", mac_addresses)
 
-            with ThreadPoolExecutor(max_workers=20) as executor:
-                futures = [
-                    executor.submit(
-                        restart_device_wrapper, (base_url, mac, session_cookie)
-                    )
-                    for mac in mac_addresses
-                ]
+                with ThreadPoolExecutor(max_workers=20) as executor:
+                    futures = [
+                        executor.submit(
+                            restart_device_wrapper,
+                            (base_url, mac, session, logger),
+                        )
+                        for mac in mac_addresses
+                    ]
 
                 for future in as_completed(futures):
                     mac_address, success = future.result()
@@ -138,10 +137,10 @@ def main():
                             f"Failed to restart device with MAC address {mac_address}"
                         )
 
+            else:
+                print("Failed to fetch data from URL")
         else:
-            print("Failed to fetch data from URL")
-    else:
-        print("Login failed")
+            print("Login failed")
 
 
 if __name__ == "__main__":
