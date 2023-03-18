@@ -2,9 +2,9 @@
 
 import os
 import requests
-import json
 import logging
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def setup_logging():
@@ -14,7 +14,9 @@ def setup_logging():
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     console_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
@@ -69,7 +71,9 @@ def fetch_data(base_url, session_cookie):
     if response.status_code == 200:
         return response.json()
     else:
-        logger.error("Failed to fetch data from URL. Status code: %d", response.status_code)
+        logger.error(
+            "Failed to fetch data from URL. Status code: %d", response.status_code
+        )
         return None
 
 
@@ -78,7 +82,9 @@ def restart_device(base_url, mac_address, session_cookie):
     post_data = {"cmd": "restart", "mac": mac_address}
 
     try:
-        cmd_response = requests.post(cmd_url, json=post_data, cookies=session_cookie, verify=False)
+        cmd_response = requests.post(
+            cmd_url, json=post_data, cookies=session_cookie, verify=False
+        )
     except requests.exceptions.RequestException as e:
         logger.error("Request failed for MAC address %s: %s", mac_address, e)
         return False
@@ -92,6 +98,11 @@ def restart_device(base_url, mac_address, session_cookie):
             cmd_response.status_code,
         )
         return False
+
+
+def restart_device_wrapper(args):
+    base_url, mac_address, session_cookie = args
+    return mac_address, restart_device(base_url, mac_address, session_cookie)
 
 
 def main():
@@ -108,11 +119,25 @@ def main():
             mac_addresses = filter_mac_addresses(json_data)
             print("Filtered MAC addresses:", mac_addresses)
 
-            for mac_address in mac_addresses:
-                if restart_device(base_url, mac_address, session_cookie):
-                    print(f"Successfully restarted device with MAC address {mac_address}")
-                else:
-                    print(f"Failed to restart device with MAC address {mac_address}")
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = [
+                    executor.submit(
+                        restart_device_wrapper, (base_url, mac, session_cookie)
+                    )
+                    for mac in mac_addresses
+                ]
+
+                for future in as_completed(futures):
+                    mac_address, success = future.result()
+                    if success:
+                        print(
+                            f"Successfully restarted device with MAC address {mac_address}"
+                        )
+                    else:
+                        print(
+                            f"Failed to restart device with MAC address {mac_address}"
+                        )
+
         else:
             print("Failed to fetch data from URL")
     else:
