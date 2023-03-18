@@ -1,0 +1,25 @@
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - run: cd restart
+    - run: pip install -r requirements.txt pyinstaller
+    - run: ./build.sh
+    # Optionally verify that it works (provided that it does not need user interaction)
+    - run: ./dist/restart_uap -v
+    - uses: actions/upload-artifact@v2
+      with:
+        path: restart/dist/*
