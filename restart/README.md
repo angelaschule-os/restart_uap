@@ -8,7 +8,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create a `.env` file with the following content:
+Create an `.env` file with the following content:
 
 ```text
 API_BASE_URL=https://XX.XX.X.X:XXXX
