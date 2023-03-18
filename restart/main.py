@@ -10,6 +10,23 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 
+import argparse
+import git_version
+import subprocess
+
+def get_git_version_hash():
+    try:
+        git_hash = (
+            subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+            .decode("utf-8")
+            .strip()
+        )
+        return git_hash
+    except Exception as e:
+        print("Error getting Git hash:", e)
+        return None
+
+
 disable_warnings(InsecureRequestWarning)
 
 
@@ -144,4 +161,15 @@ def main():
 
 
 if __name__ == "__main__":
+
+    if not git_version.GIT_HASH:
+        git_version.GIT_HASH = get_git_version_hash()
+
+    parser = argparse.ArgumentParser(description="Your script description")
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"Git version hash: {git_version.GIT_HASH}"
+    )
+    args = parser.parse_args()
+
+
     main()
