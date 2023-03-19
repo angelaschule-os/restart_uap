@@ -53,6 +53,6 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            restart_uap-ubuntu-latest.zip
-            restart_uap-windows-latest.zip
+            restart_uap-ubuntu-latest/restart_uap
+            restart_uap-windows-latest/restart_uap.exe
 
