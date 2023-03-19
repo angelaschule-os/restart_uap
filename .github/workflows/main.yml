@@ -30,10 +30,10 @@ jobs:
           pip install -r requirements.txt pyinstaller
           .\build.bat
           .\dist\restart_uap.exe -v
-      - uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
         with:
           name: restart_uap-${{ matrix.os }}
-          path: dist/restart_uap
+          path: dist/*
           retention-days: 21
   release:
     name: "Prelease"
