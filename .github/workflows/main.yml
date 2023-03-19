@@ -18,14 +18,21 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11.2
-
-      - run: pip install -r requirements.txt pyinstaller
-      - run: ./build.sh
-      # Optionally verify that it works (provided that it does not need user interaction)
-      - run: dist/restart_uap -v
+      - name: Build and test on ubuntu-latest
+        if: matrix.os == 'ubuntu-latest'
+        run: pip install -r requirements.txt pyinstaller
+        run: ./build.sh
+        # Optionally verify that it works (provided that it does not need user interaction)
+        run: dist/restart_uap -v
+      - name: Build and test on pwsh
+        if: matrix.os == 'windows-latest'
+        run: pip install -r requirements.txt pyinstaller
+        run: .\build.bat
+        # Optionally verify that it works (provided that it does not need user interaction)
+        run: .\dist\restart_uap.exe -v
       - uses: actions/upload-artifact@v3
         with:
-          name: restart_uap
+          name: restart_uap-${{ matrix.os }}
           path: dist/restart_uap
           retention-days: 21
   release:
@@ -46,4 +53,5 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            restart_uap.zip
+            restart_uap-ubuntu-latest/*.zip
+
