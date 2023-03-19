@@ -48,7 +48,7 @@ jobs:
       - name: Display fetched artifacts
         run: ls -R
       - name: Emit a Github Release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.12.0
         with:
           artifacts: "restart_uap-ubuntu-latest/restart_uap,restart_uap-windows-latest/restart_uap.exe"
           prerelease: true
