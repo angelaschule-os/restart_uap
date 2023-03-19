@@ -1,5 +1,9 @@
+name: Release Builds
+
 on:
   push:
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -7,20 +11,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest','windows-latest']
+        os: ["ubuntu-latest", "windows-latest"]
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.11.2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.2
 
-    - run: pip install -r requirements.txt pyinstaller
-    - run: ./build.sh
-    # Optionally verify that it works (provided that it does not need user interaction)
-    - run: dist/restart_uap -v
-    - uses: actions/upload-artifact@v3
-      with:
-        name: restart_uap
-        path: dist/restart_uap
-        retention-days: 21
+      - run: pip install -r requirements.txt pyinstaller
+      - run: ./build.sh
+      # Optionally verify that it works (provided that it does not need user interaction)
+      - run: dist/restart_uap -v
+      - uses: actions/upload-artifact@v3
+        with:
+          name: restart_uap
+          path: dist/restart_uap
+          retention-days: 21
+  release:
+    name: "Prelease"
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # We don't need the repo, grab all artifacts from the build stage
+      # The plugin puts each artifact in a folder of `artifactname`
+      - uses: actions/download-artifact@v3
+      - name: Display fetched artifacts
+        run: ls -R
+      - name: Emit a Github Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            restart_uap.zip
