@@ -39,6 +39,8 @@ jobs:
     name: "Prelease"
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # We don't need the repo, grab all artifacts from the build stage
       # The plugin puts each artifact in a folder of `artifactname`
@@ -46,13 +48,8 @@ jobs:
       - name: Display fetched artifacts
         run: ls -R
       - name: Emit a Github Release
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          artifacts: "restart_uap-ubuntu-latest/restart_uap,restart_uap-windows-latest/restart_uap.exe"
           prerelease: true
-          title: "Development Build"
-          files: |
-            restart_uap-ubuntu-latest/restart_uap
-            restart_uap-windows-latest/restart_uap.exe
 
