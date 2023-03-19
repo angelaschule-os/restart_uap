@@ -21,7 +21,6 @@ jobs:
       - name: Build and test on ubuntu-latest
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install -r requirements.txt pyinstaller
           ./build.sh
           dist/restart_uap -v
       - name: Build and test on pwsh
