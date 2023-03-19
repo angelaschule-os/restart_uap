@@ -52,4 +52,7 @@ jobs:
         with:
           artifacts: "restart_uap-ubuntu-latest/restart_uap,restart_uap-windows-latest/restart_uap.exe"
           prerelease: true
+          draft: true
+          generateReleaseNotes: true
+          makeLatest: true
 
