@@ -21,4 +21,6 @@ jobs:
     - run: dist/restart_uap -v
     - uses: actions/upload-artifact@v3
       with:
-        path: dist/*
+        name: restart_uap
+        path: dist/restart_uap
+        retention-days: 21
