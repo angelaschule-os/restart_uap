@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt pyinstaller
           .\build.bat
           .\dist\restart_uap.exe -v
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3
         with:
           name: restart_uap-${{ matrix.os }}
           path: dist/*
@@ -54,4 +54,5 @@ jobs:
           title: "Development Build"
           files: |
             restart_uap-ubuntu-latest/*.zip
+            restart_uap-windows-latest/*.zip
 
