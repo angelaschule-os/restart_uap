@@ -55,8 +55,8 @@ def filter_mac_addresses(json_data):
     return mac_addresses
 
 
-def load_credentials():
-    load_dotenv()
+def load_credentials(dotenv_path):
+    load_dotenv(dotenv_path)
 
     username = os.getenv("API_USERNAME")
     password = os.getenv("API_PASSWORD")
@@ -124,7 +124,8 @@ def restart_device_wrapper(args):
 
 def main():
     logger = setup_logging()
-    username, password, base_url = load_credentials()
+    username, password, base_url = load_credentials(args.config)
+
 
     with requests.Session() as session:
         if login(base_url, username, password, session, logger):
@@ -165,9 +166,13 @@ if __name__ == "__main__":
     if not git_version.GIT_HASH:
         git_version.GIT_HASH = get_git_version_hash()
 
-    parser = argparse.ArgumentParser(description="Your script description")
+    parser = argparse.ArgumentParser(description="Restart all UniFi APs.")
     parser.add_argument(
         "-v", "--version", action="version", version=f"Git version hash: {git_version.GIT_HASH}"
+    )
+    parser.add_argument(
+        "-c","--config", metavar="PATH", default=".env",
+        help="Path to the config file (default: .env)"
     )
     args = parser.parse_args()
 
