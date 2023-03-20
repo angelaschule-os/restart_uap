@@ -40,6 +40,20 @@ following packages to be installed:
 sudo apt-get install -y build-essential patchelf
 ```
 
+## Create a cronjob under Linux
+
+A cronjob can be created for daily execution, e.g. at 06:30 in the morning.
+
+```shell
+crontab -e
+```
+
+The crontab should look like this.
+
+```text
+30 6 * * * /<PATH>/<TO>/restart_uap -c /<PATH>/<To>/<CONFIG_FILE>
+```
+
 ## API Documentation
 
 <https://ubntwiki.com/products/software/unifi-controller/api>
