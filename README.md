@@ -31,6 +31,15 @@ The generated executable will be placed in the `dist` folder created in the
 same directory as your script. You can distribute this file, and it will run on
 Linux / Windows systems without requiring Python or any dependencies to be installed.
 
+Note:
+
+For Debian GNU/Linux based Linux distributions (e.g. Ubuntu) you need the
+following packages to be installed:
+
+```shell
+sudo apt-get install -y build-essential patchelf
+```
+
 ## API Documentation
 
 <https://ubntwiki.com/products/software/unifi-controller/api>
